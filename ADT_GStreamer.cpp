@@ -4,7 +4,7 @@
 // 	Áurea - Desarrollo Tecnológico
 // 	http://www.aurea-dt.com
 // 	16 Nov 2009 - 28 Oct 2010
-//	16 Jun 2014
+//	16 Jun 2014, 24 Nov 2015
 //------------------------------------------------------------------------------
 //	Funciones para la manipulación de la biblioteca GStreamer
 //	http://gstreamer.freedesktop.org/
