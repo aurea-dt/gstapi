@@ -16,7 +16,6 @@
 #include "My_guiClass.h"
 #include "My_callbacks.h"
 #include "ADT_GStreamer.h"
-
 using namespace std;
 //------------------------------------------------------------------------------
 int main (int argc, char *argv[])

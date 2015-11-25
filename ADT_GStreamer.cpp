@@ -43,7 +43,7 @@ ADT_GstVideo::ADT_GstVideo()
 	GstBus* bus;
 	bus = gst_pipeline_get_bus(GST_PIPELINE (videoPipeline));
 	gst_bus_add_watch(bus, videoplayer_bus_callback, NULL);
-	gst_bus_set_sync_handler(bus, (GstBusSyncHandler) bus_sync_handler_cb, this);
+	gst_bus_set_sync_handler(bus, (GstBusSyncHandler) bus_sync_handler_cb, this, NULL);
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE (photoPipeline));
 //	gst_bus_add_watch (bus, photoPipeline_bus_callback, NULL);
@@ -63,27 +63,27 @@ int ADT_GstVideo::createMainPipeline()
 {
 	videoSrc = gst_element_factory_make("v4l2src", "video_source_main");
  	filterCaps = gst_element_factory_make("capsfilter", "filter_cap");
-		GstCaps *fc = gst_caps_new_full(gst_structure_new ("video/x-raw-rgb", NULL), NULL);
+		GstCaps *fc = gst_caps_new_full(gst_structure_new ("video/x-raw", NULL), NULL);
  		g_object_set(G_OBJECT (filterCaps), "caps", fc, NULL);
 		//gst_object_unref(GST_OBJECT (fc));
 	filter = gst_element_factory_make("identity", "video_filter");
 	tee = gst_element_factory_make("tee", "tee");
 	videoQueue = gst_element_factory_make("queue", "video_queue");
-	colorSpaceConverter  = gst_element_factory_make("ffmpegcolorspace", "colorSpaceConverter");
+	colorSpaceConverter  = gst_element_factory_make("videoconvert", "colorSpaceConverter");
 	videoSink = gst_element_factory_make("autovideosink", "video_sink");
 
-	gst_bin_add_many(GST_BIN (videoPipeline), videoSrc, filter, filterCaps, tee, videoQueue, colorSpaceConverter, videoSink, NULL);
-	if(!gst_element_link_many(videoSrc, filter, filterCaps, tee, videoQueue, colorSpaceConverter, videoSink, NULL))
+	gst_bin_add_many(GST_BIN (videoPipeline), videoSrc, filter, filterCaps/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL);
+	if(!gst_element_link_many(videoSrc, filter, filterCaps/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL))
 	{
-		cerr << "ADT_GstVideo(): Failed to link elements in the pipeline" << endl;
+		cerr << "ADT_GstVideo.createMainPipeline: Failed to link elements in the pipeline" << endl;
 		return 1;
 	}
 
 
 	/* add ghostpad */
-  	GstPad* pad = gst_element_get_request_pad(tee, "src%d");
-		gst_element_add_pad(videoPipeline, gst_ghost_pad_new ("src", pad));
-		gst_object_unref(GST_OBJECT (pad));
+//  	GstPad* pad = gst_element_get_request_pad(tee, "src%d");
+//		gst_element_add_pad(videoPipeline, gst_ghost_pad_new ("src", pad));
+//		gst_object_unref(GST_OBJECT (pad));
 
  return 0;
 }
@@ -123,13 +123,13 @@ int ADT_GstVideo::connect(const char* devName, unsigned int _width, unsigned int
 	//int FPS = 25;
 	g_object_set(G_OBJECT (videoSrc), "device", devName, NULL);
 	gst_element_set_state(videoPipeline, GST_STATE_READY); // connection bug fixed 26/08/2010, set state must be after set device
-	GstCaps *fc = gst_caps_new_full(gst_structure_new ("video/x-raw-rgb",
+	GstCaps *fc = gst_caps_new_full(gst_structure_new ("video/x-raw",
 						"width", G_TYPE_INT, width,
 						"height", G_TYPE_INT, height,	
-						//"format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('I', '4', '2', '0'),
+						"format", G_TYPE_STRING, "RGB",//"format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('I', '4', '2', '0'),
 						//"framerate", GST_TYPE_FRACTION, FPS, 1,
-						"bpp", G_TYPE_INT, 24,
-				   		"depth", G_TYPE_INT, 24,					 
+//						"bpp", G_TYPE_INT, 24,
+//				   		"depth", G_TYPE_INT, 24,					 
 						NULL),
       						NULL);
 
@@ -179,6 +179,7 @@ return 0;
 //------------------------------------------------------------------------------
 int ADT_GstVideo::enumCapDev()//enumerate installed capture devices
 {
+	cout << "ADT_GstVideo::enumCapDev()" << endl;
 	char* str;
 	DIR* Dir;
 	dirent* DirEntry;
@@ -195,6 +196,7 @@ int ADT_GstVideo::enumCapDev()//enumerate installed capture devices
 			{
 				
 				string dev = "/dev/"+fname;
+				cout << dev << endl;
 				GstElement* tempVideoSrc;
 					tempVideoSrc  = gst_element_factory_make("v4l2src", "video_source_enumCapDev");
 
@@ -288,6 +290,7 @@ const ADT_Point2D_ui ADT_GstVideo::getRes(unsigned int d, unsigned int i) const
 //------------------------------------------------------------------------------
 vector<ADT_Point2D_ui> ADT_GstVideo::getResList(const char* devName) const
 {
+	cout << "ADT_GstVideo::getResList(" << devName << ")" << endl;
 	GstElement* videoSrcTmp;
 	videoSrcTmp  = gst_element_factory_make("v4l2src", "video_source_tmp");
 	g_object_set (G_OBJECT (videoSrcTmp), "device", devName, NULL);
@@ -299,7 +302,7 @@ vector<ADT_Point2D_ui> ADT_GstVideo::getResList(const char* devName) const
 //------------------------------------------------------------------------------
 vector<ADT_Point2D_ui> ADT_GstVideo::getResList(GstElement* videoSrcTmp) const
 {
-
+	cout << "ADT_GstVideo::getResList(videoSrcTmp)" << endl;
 	vector<ADT_Point2D_ui> resListTemp;
 	GstElement* pipeLineTmp;
 
@@ -308,8 +311,8 @@ vector<ADT_Point2D_ui> ADT_GstVideo::getResList(GstElement* videoSrcTmp) const
 	gst_element_set_state(pipeLineTmp, GST_STATE_READY);
 
 	GstPad* srcPad = gst_element_get_static_pad(videoSrcTmp, "src");
-	GstCaps* videoCaps = gst_pad_get_caps(srcPad);
-
+	GstCaps* videoCaps = gst_pad_query_caps(srcPad, NULL);
+	cout << gst_caps_to_string (videoCaps) << endl;
 	unsigned int nCaps = gst_caps_get_size(videoCaps);
 	const GstStructure* str;
 	int width, height, depth, fpsNumerator, fpsDenominator;
@@ -324,8 +327,8 @@ vector<ADT_Point2D_ui> ADT_GstVideo::getResList(GstElement* videoSrcTmp) const
 			width = height = 0;
 		if(!gst_structure_get_int(str, "bpp", &depth))
 			depth = 0;
-		if(!gst_structure_get_fourcc(str, "format", &format))
-			format=GST_STR_FOURCC ("NONE");
+//		if(!gst_structure_get_string(str, "format", &format))
+//			format=GST_STR_FOURCC ("NONE");
 
 		if(!gst_structure_get_fraction(str, "framerate", &fpsNumerator, &fpsDenominator))
 		{
@@ -334,7 +337,8 @@ vector<ADT_Point2D_ui> ADT_GstVideo::getResList(GstElement* videoSrcTmp) const
 		}
 
 		formatName = (char*)gst_structure_get_name(str);
-		if((string)formatName == "video/x-raw-rgb")// && format==GST_MAKE_FOURCC ('I', '4', '2', '0'))
+		cout << formatName << endl;
+		if((string)formatName == "video/x-raw")// && format==GST_MAKE_FOURCC ('I', '4', '2', '0'))
 		{
 			ADT_Point2D_ui resolution;
 			resolution.x = width;
@@ -373,12 +377,12 @@ int ADT_GstVideo::videoplayer_bus_callback(GstBus* bus, GstMessage* message, voi
 void ADT_GstVideo::video_widget_realize_cb(GtkWidget* widget, void* user_data)
 {
 	#if GTK_CHECK_VERSION(2,18,0)
-	  if (!gdk_window_ensure_native (widget->window))
+	  if (!gdk_window_ensure_native (gtk_widget_get_parent_window(widget)))
 	    g_error ("Couldn't create native window needed for GstXOverlay!");
 	#endif
 
 	#ifdef GDK_WINDOWING_X11
-	  ((ADT_GstVideo*)user_data)->video_window_xid = GDK_WINDOW_XID (widget->window);
+	  ((ADT_GstVideo*)user_data)->video_window_xid = GDK_WINDOW_XID (gtk_widget_get_parent_window(widget));
 	#endif
 }
 //------------------------------------------------------------------------------
@@ -386,45 +390,63 @@ GstBusSyncReply ADT_GstVideo::bus_sync_handler_cb(GstBus* bus, GstMessage* messa
 {
 	if (GST_MESSAGE_TYPE(message) != GST_MESSAGE_ELEMENT)
 		return GST_BUS_PASS;
-	if (!gst_structure_has_name(message->structure, "prepare-xwindow-id"))
-	return GST_BUS_PASS;
+//	if (!gst_structure_has_name(message->structure, "prepare-xwindow-id"))
+ 	if (!gst_is_video_overlay_prepare_window_handle_message (message))
+		return GST_BUS_PASS;
  
 	if (((ADT_GstVideo*)user_data)->video_window_xid != 0)
 	{
-		GstXOverlay *xoverlay;
-		xoverlay = GST_X_OVERLAY(GST_MESSAGE_SRC (message));
-		gst_x_overlay_set_xwindow_id (xoverlay, ((ADT_GstVideo*)user_data)->video_window_xid);
+		GstVideoOverlay *xoverlay;
+		xoverlay = GST_VIDEO_OVERLAY(GST_MESSAGE_SRC (message));
+		//gst_x_overlay_set_xwindow_id (xoverlay, ((ADT_GstVideo*)user_data)->video_window_xid);
+		gst_video_overlay_set_window_handle (xoverlay, ((ADT_GstVideo*)user_data)->video_window_xid);
 		g_object_set (xoverlay, "force-aspect-ratio", TRUE, NULL);
  	}
 	else
 	{
 		g_warning ("Should have obtained video_window_xid by now!");
+		cerr << "Should have obtained video_window_xid by now!" << endl;
 	}
  
 	gst_message_unref (message);
 	return GST_BUS_DROP;
 }
 //------------------------------------------------------------------------------
-void ADT_GstVideo::hide_cb(GtkObject* object, void* user_data)
+void ADT_GstVideo::hide_cb(GtkWidget* object, void* user_data)
 {
 	((ADT_GstVideo*)user_data)->disconnect();
 }
 //------------------------------------------------------------------------------
-void ADT_GstVideo::hideanddisconnect_cb(GtkObject* object, void* user_data)
+void ADT_GstVideo::hideanddisconnect_cb(GtkWidget* object, void* user_data)
 {
 	gtk_widget_hide_on_delete((GtkWidget*)object);
 }
 //------------------------------------------------------------------------------
 int ADT_GstVideo::filter_handoff_callback(GstElement* filter, GstBuffer* buffer, void* user_data)
 {
+
 	int width, height;
 	GstPad* srcPad = gst_element_get_static_pad(filter, "sink");
-	GstCaps* videoCaps = gst_pad_get_caps(srcPad);
+	GstCaps* videoCaps = gst_pad_query_caps(srcPad, NULL);
 	const GstStructure* str;
 	str = gst_caps_get_structure(videoCaps, 0);
 	if (!gst_structure_get_int(str, "width", &width) || !gst_structure_get_int (str, "height", &height))
 		return 1;
-	unsigned char* data = (unsigned char*)GST_BUFFER_DATA (buffer);        
+
+//	unsigned char* data = (unsigned char*)GST_BUFFER_DATA (buffer);        
+
+	GstMapInfo map;
+	if (gst_buffer_map (buffer, &map, GST_MAP_WRITE))
+	{ 
+
+		if(((ADT_GstVideo*)user_data)->fpt!=NULL)// check if initialized
+		{			
+			unsigned char* data = map.data; 
+			//cout << width * height *3<< " => " << map.size << endl; 
+			((ADT_GstVideo*)user_data)->fpt(data, width, height, 3, user_data);
+			gst_buffer_unmap (buffer, &map); 
+		}
+	} 
 
 //	if(((ADT_GstVideo*)user_data)->captureRequest)
 //	{
@@ -441,10 +463,7 @@ int ADT_GstVideo::filter_handoff_callback(GstElement* filter, GstBuffer* buffer,
 //		
 //	}
 
-	if(((ADT_GstVideo*)user_data)->fpt!=NULL)// check if initialized
-	{
-		((ADT_GstVideo*)user_data)->fpt(data, width, height, 3, user_data); 
-	}
+	
 
 return 0;
 }

@@ -14,7 +14,7 @@
 // your public header include
 //------------------------------------------------------------------------------
 #include <gtk/gtk.h>
-#include <gnome.h> //for canvas
+//#include <gnome.h> //for canvas
 //------------------------------------------------------------------------------
 
 // the declaration of your class...
@@ -35,5 +35,5 @@ void comboboxAppendText(GtkComboBox* combobox, const char* text);
 //------------------------------------------------------------------------------
 //			Functions for Gnome Canvas
 //------------------------------------------------------------------------------
-void clearGnomeCanvas(GtkWidget *canvas);
+//void clearGnomeCanvas(GtkWidget *canvas);
 #endif

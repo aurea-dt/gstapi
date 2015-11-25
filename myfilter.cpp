@@ -13,10 +13,11 @@ void myFilter(unsigned char *data, unsigned int width, unsigned int height, unsi
 {
 	int th = 128;
         unsigned int i = width*height;
-	for(;i--;)//unsigned int i = 0; i<width*height; i++)
+	for(unsigned int i = 0; i<width*height*nChannels; i++)//;i--;)//
 	{
-		for(unsigned int c = 0; c < nChannels; c++)
-			*data++=(*data < th ? 0 : 255);
+//		for(unsigned int c = 0; c < 2; c++)
+//			*data++=(*data < th ? 0 : 255);
+			data[i]=(data[i] < th ? 0 : 255);
 	}
 }
 

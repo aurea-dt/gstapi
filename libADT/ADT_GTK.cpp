@@ -54,23 +54,23 @@ void clearComboBox(GtkComboBox* combobox)
 //------------------------------------------------------------------------------
 //			Functions for Gnome Canvas
 //------------------------------------------------------------------------------
-void clearGnomeCanvas(GtkWidget *canvas)
-{
-  GnomeCanvasGroup *root;
-  GList *temp_list;
+//void clearGnomeCanvas(GtkWidget *canvas)
+//{
+//  GnomeCanvasGroup *root;
+//  GList *temp_list;
 
-	root = GNOME_CANVAS_GROUP(gnome_canvas_root(GNOME_CANVAS(canvas)));
+//	root = GNOME_CANVAS_GROUP(gnome_canvas_root(GNOME_CANVAS(canvas)));
 
-	temp_list = root->item_list;
-	int i=0;
-	while(temp_list != NULL)
-	{
-    		GnomeCanvasItem *item = GNOME_CANVAS_ITEM(temp_list->data);
-    		temp_list = temp_list->next;
-    		gtk_object_destroy(GTK_OBJECT(item));
-		g_object_unref(GTK_OBJECT(item));
-		i++;
-		cout << i << endl;
-	}
-}
+//	temp_list = root->item_list;
+//	int i=0;
+//	while(temp_list != NULL)
+//	{
+//    		GnomeCanvasItem *item = GNOME_CANVAS_ITEM(temp_list->data);
+//    		temp_list = temp_list->next;
+//    		gtk_object_destroy(GTK_OBJECT(item));
+//		g_object_unref(GTK_OBJECT(item));
+//		i++;
+//		cout << i << endl;
+//	}
+//}
 //------------------------------------------------------------------------------

@@ -21,7 +21,8 @@
 #ifdef GDK_WINDOWING_X11
 	#include <gdk/gdkx.h>  // for GDK_WINDOW_XID
 #endif
-#include <gst/interfaces/xoverlay.h>
+//#include <gst/interfaces/xoverlay.h>
+#include <gst/video/videooverlay.h>
 #include <string>
 #include <vector>
 #include "ADT_DataTypes.h"
@@ -75,8 +76,8 @@ class ADT_GstVideo
 	static int filter_handoff_callback(GstElement* filter, GstBuffer* buffer, void* user_data);
 	static void video_widget_realize_cb(GtkWidget* widget, void* user_data);
 	static GstBusSyncReply bus_sync_handler_cb(GstBus* bus, GstMessage* message, void* user_data);
-	static void hideanddisconnect_cb(GtkObject* object, void* user_data);
-	static void hide_cb(GtkObject* object, void* user_data);
+	static void hideanddisconnect_cb(GtkWidget* object, void* user_data);
+	static void hide_cb(GtkWidget* object, void* user_data);
 	
  public:	
 	void* userdata;
