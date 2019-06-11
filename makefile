@@ -36,8 +36,9 @@ Project: mainP.o guiClass.o callbacks.o ADT_GStreamer.o myfilter.o ADT_GTK.o ADT
 	myfilter.o \
 	$(libADT)ADT_GTK.o \
 	$(libADT)ADT_DataTypes.o \
-	$(libADT)ADT_Tools.o \
-	-lgstinterfaces-0.10
+	$(libADT)ADT_Tools.o 
+#\
+#	-lgstinterfaces-0.10
 	
 mainP.o: $(mainP).cpp
 	$(CC) $(INCLUIDES) $(CFLAGS) \
