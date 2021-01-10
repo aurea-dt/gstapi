@@ -28,7 +28,6 @@ all: Project
 
 Project: mainP.o guiClass.o callbacks.o ADT_GStreamer.o myfilter.o ADT_GTK.o ADT_DataTypes.o ADT_Tools.o
 	$(CC) -export-dynamic -o $(APPNAME) \
-	$(LIBS) \
 	$(mainP).o \
 	$(guiClass).o \
 	$(callbacks).o \
@@ -36,7 +35,8 @@ Project: mainP.o guiClass.o callbacks.o ADT_GStreamer.o myfilter.o ADT_GTK.o ADT
 	myfilter.o \
 	$(libADT)ADT_GTK.o \
 	$(libADT)ADT_DataTypes.o \
-	$(libADT)ADT_Tools.o 
+	$(libADT)ADT_Tools.o \
+	$(LIBS)
 #\
 #	-lgstinterfaces-0.10
 	
