@@ -66,14 +66,15 @@ int ADT_GstVideo::createMainPipeline()
 		GstCaps *fc = gst_caps_new_full(gst_structure_new ("video/x-raw", NULL), NULL);
  		g_object_set(G_OBJECT (filterCaps), "caps", fc, NULL);
 		//gst_object_unref(GST_OBJECT (fc));
+	rgbConverter  = gst_element_factory_make("videoconvert", "rgbConverter");
 	filter = gst_element_factory_make("identity", "video_filter");
-	tee = gst_element_factory_make("tee", "tee");
+//	tee = gst_element_factory_make("tee", "tee");
 	videoQueue = gst_element_factory_make("queue", "video_queue");
 	colorSpaceConverter  = gst_element_factory_make("videoconvert", "colorSpaceConverter");
 	videoSink = gst_element_factory_make("autovideosink", "video_sink");
 
-	gst_bin_add_many(GST_BIN (videoPipeline), videoSrc, filter, filterCaps/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL);
-	if(!gst_element_link_many(videoSrc, filter, filterCaps/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL))
+	gst_bin_add_many(GST_BIN (videoPipeline), videoSrc, rgbConverter, filterCaps, filter/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL);
+	if(!gst_element_link_many(videoSrc, rgbConverter, filterCaps, filter/*, tee*/, videoQueue, colorSpaceConverter, videoSink, NULL))
 	{
 		cerr << "ADT_GstVideo.createMainPipeline: Failed to link elements in the pipeline" << endl;
 		return 1;
@@ -169,7 +170,7 @@ int ADT_GstVideo::connect(unsigned int devIndex, unsigned int resIndex)
 
 	if(resIndex >= (unsigned int)getResListSize(devIndex))
 	{
-		cerr << "Format not available! " << resList.size()<< endl;
+		cerr << "Format not available! " << resList.size() << endl;
 		return 1;
 	}
 
@@ -180,7 +181,8 @@ return 0;
 int ADT_GstVideo::enumCapDev()//enumerate installed capture devices
 {
 	cout << "ADT_GstVideo::enumCapDev()" << endl;
-	char* str;
+//	char* 
+	string str;
 	DIR* Dir;
 	dirent* DirEntry;
 	string fname;
@@ -202,9 +204,12 @@ int ADT_GstVideo::enumCapDev()//enumerate installed capture devices
 
 				g_object_set(G_OBJECT (tempVideoSrc), "device", dev.c_str(), NULL);
 				g_object_get(G_OBJECT (tempVideoSrc), "device-name", &str, NULL);
+				cout << str << ": " << endl;
 				vector<ADT_Point2D_ui> rlTemp = getResList(tempVideoSrc);
 				if(rlTemp.size() > 0)
-				{	cout << str << ": " << dev << endl;
+				{	
+					cout << str << ": " ;
+					cout << dev << endl;
 					devNameList.push_back(str);		
 					devList.push_back(dev);
 					resList.push_back(rlTemp);
@@ -236,6 +241,7 @@ void ADT_GstVideo::unsetFilter()
 //------------------------------------------------------------------------------
 int ADT_GstVideo::startFilter()
 {
+	cout << "startFilter()"  << endl;
 	g_object_set(G_OBJECT (filter), "signal-handoffs", TRUE, NULL);
 	return g_signal_connect(filter, "handoff", G_CALLBACK (filter_handoff_callback), this);
 }
@@ -425,14 +431,16 @@ void ADT_GstVideo::hideanddisconnect_cb(GtkWidget* object, void* user_data)
 int ADT_GstVideo::filter_handoff_callback(GstElement* filter, GstBuffer* buffer, void* user_data)
 {
 
+	cout << "filter_handoff_callback" << endl;
 	int width, height;
-	GstPad* srcPad = gst_element_get_static_pad(filter, "sink");
+	GstPad* srcPad = gst_element_get_static_pad(filter, "src");
 	GstCaps* videoCaps = gst_pad_query_caps(srcPad, NULL);
 	const GstStructure* str;
 	str = gst_caps_get_structure(videoCaps, 0);
+	cout << gst_caps_to_string (videoCaps) << endl;
 	if (!gst_structure_get_int(str, "width", &width) || !gst_structure_get_int (str, "height", &height))
 		return 1;
-
+	cout << width << ", " << height << endl;
 //	unsigned char* data = (unsigned char*)GST_BUFFER_DATA (buffer);        
 
 	GstMapInfo map;
@@ -442,11 +450,19 @@ int ADT_GstVideo::filter_handoff_callback(GstElement* filter, GstBuffer* buffer,
 		if(((ADT_GstVideo*)user_data)->fpt!=NULL)// check if initialized
 		{			
 			unsigned char* data = map.data; 
-			//cout << width * height *3<< " => " << map.size << endl; 
+			cout << width * height *3<< " => " << map.size << endl; 
 			((ADT_GstVideo*)user_data)->fpt(data, width, height, 3, user_data);
 			gst_buffer_unmap (buffer, &map); 
 		}
-	} 
+		else
+		{
+			cout << "fpt == NULL" << endl;
+		}
+	}
+	else
+	{
+		cout << "gst_buffer_map failed" << endl;
+	}
 
 //	if(((ADT_GstVideo*)user_data)->captureRequest)
 //	{

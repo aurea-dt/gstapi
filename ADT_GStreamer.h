@@ -52,6 +52,7 @@ class ADT_GstVideo
         GstElement* filterCaps;
 	GstElement* tee;
 	GstElement* videoQueue;
+	GstElement* rgbConverter;	
 	GstElement* colorSpaceConverter;	
         GstElement* videoSink;        
 	GstElement* videoPipeline;

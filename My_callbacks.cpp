@@ -18,8 +18,7 @@ using namespace std;
 //------------------------------------------------------------------------------
 int on_idle_callback(void *data)
 {
-
- return true;
+	return true;
 }
 //------------------------------------------------------------------------------
 void on_main_window_destroy(GtkWidget *object, void* user_data)
@@ -38,7 +37,8 @@ void on_refresh_button_clicked(GtkWidget *object, void* user_data)
 	g_signal_handlers_block_by_func (G_OBJECT (GTKapp->device_combobox), (void *)on_device_combobox_changed, NULL);
 
 		clearComboBox((GtkComboBox*)GTKapp->device_combobox);
-	 	video->enumCapDev();cout << "video->enumCapDev();" << " DONE" << endl;
+	 	video->enumCapDev();
+		cout << "video->enumCapDev();" << " DONE" << endl;
 		for(unsigned int n = 0; n<video->getDevListSize(); n++)
 		{
 			stringstream ss;
